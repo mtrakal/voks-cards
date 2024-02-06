@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOKS kartičky - tisk</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        @media print {
+
+            .no-print,
+            .no-print * {
+                display: none !important;
+            }
+        }
+
+        #image-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5cm;
+        }
+
+        .image-container {
+            position: relative;
+            height: 5cm;
+            border: 2px solid black;
+            display: flex;
+            flex: 0 0 5cm;
+            flex-direction: column;
+        }
+
+        .image {
+            display: flex;
+            justify-content: center;
+            height: calc(100% - 2em);
+            z-index: 1;
+        }
+
+        .image img {
+            /* object-fit: cover; */
+            max-width: 100%;
+            height: auto;
+            vertical-align: middle;
+            padding: 0.5em;
+        }
+
+        .keyword-text {
+            margin-top: auto;
+            text-align: center;
+            text-transform: uppercase;
+            z-index: 2;
+            background-color: white;
+            padding: 4px;
+            font-weight: bold;
+        }
+
+        .search-input {
+            position: relative;
+            margin: 0;
+            border: none;
+            padding: 4px;
+            box-sizing: border-box;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+        }
+
+        .edit-btn {
+            display: none;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            z-index: 4;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .preview {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        .preview:hover {
+            border-color: blue;
+        }
+
+        #preview-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: white;
+            border: 2px solid black;
+            z-index: 1000;
+            overflow-y: auto;
+            max-height: 80%;
+        }
+
+        #preview-dialog img {
+            width: 100px;
+            height: 100px;
+            /* object-fit: cover; */
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        #close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <label title="Soubor"><input type="file" id="fileInput" accept=".json" /></label>
+    <script>
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const jsonContent = e.target.result;
+                data = JSON.parse(jsonContent);
+            }
+            reader.readAsText(file);
+        }
+    </script> -->
+
+    <h1 class="no-print">VOKS kartičky pro AAK - tisk</h1>
+    <h2 class="no-print"><a href="./index.html">Stránka pro tisk kartiček</a></h2>
+    <div id="image-grid"></div>
+    <div id="preview-dialog"></div>
+
+    <script>
+        // @ts-check
+        var data;
+        var filteredData;
+        // use for real server / localhost, not for debugger
+        fetch('voks.json')
+            .then(response => response.json())
+            .then(data => {
+                this.data = data;
+                // filteredData = data;
+            })
+            .catch(error => console.error('Error fetching data:', error));
+
+        const debounce = (func, delay) => {
+            let timeoutId;
+            return (...args) => {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+                timeoutId = setTimeout(() => {
+                    func.apply(null, args);
+                }, delay);
+            };
+        };
+
+        const imageBaseUrl = "./svg/";
+
+        const imageGrid = document.getElementById("image-grid");
+        const previewDialog = document.getElementById("preview-dialog");
+
+        const displayPreviews = (data) => {
+            previewDialog.innerHTML = "";
+
+            const previewContainer = document.createElement("div");
+            previewContainer.className = "preview-container";
+
+            data.forEach((imageData) => {
+                const img = document.createElement("img");
+                img.src = `${imageBaseUrl}${imageData.file}.svg`;
+                img.alt = imageData.tags.length > 0 ? imageData.tags[0] : "";
+                img.addEventListener("click", () => showSelectedImage(imageData));
+
+                const previewItem = document.createElement("div");
+                previewItem.className = "preview";
+                previewItem.appendChild(img);
+
+                previewContainer.appendChild(previewItem);
+            });
+
+            previewDialog.appendChild(previewContainer);
+            addCloseButton();
+            previewDialog.style.display = "block";
+        };
+
+        const showSelectedImage = (imageData) => {
+            const selectedContainer = document.querySelector(".selected");
+            if (selectedContainer) {
+                selectedContainer.innerHTML = ""; // Clear the selected container
+
+                const keywordText = document.createElement("div");
+                keywordText.className = "keyword-text";
+                keywordText.textContent = imageData.tags.length > 0 ? imageData.tags[0].toUpperCase() : "";
+
+                const imgContainer = document.createElement("div");
+                imgContainer.className = "image";
+
+                const img = document.createElement("img");
+                // img.className = "image";
+                img.src = `${imageBaseUrl}${imageData.file}.svg`;
+
+                selectedContainer.appendChild(keywordText);
+                imgContainer.appendChild(img);
+                selectedContainer.appendChild(imgContainer);
+
+                // Display edit button only when keyword text is not empty
+                if (keywordText.textContent !== "") {
+                    const editButton = document.createElement("div");
+                    editButton.className = "edit-btn no-print";
+                    editButton.innerHTML = "&#9998;";
+                    editButton.style.display = "block";
+                    editButton.addEventListener("click", () => editKeyword(selectedContainer, imageData.tags[0]));
+                    selectedContainer.appendChild(editButton);
+                }
+
+                previewDialog.style.display = "none";
+            }
+        };
+
+        const handleSearchInput = debounce((event) => {
+            const searchTerm = event.target.value.trim().toLowerCase();
+            if (searchTerm.length > 0) {
+                filteredData = data.filter(product => {
+                    const tags = product.tags.join(', ').toLowerCase();
+                    return tags.includes(searchTerm);
+                });
+                displayPreviews(filteredData);
+            }
+        }, 1000);
+
+        // Initialize the grid with empty placeholders
+        const GRID_SIZE = 12
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const emptyContainer = document.createElement("div");
+            emptyContainer.className = "image-container";
+            emptyContainer.addEventListener("click", () => selectImageContainer(emptyContainer));
+
+            const searchInput = document.createElement("input");
+            searchInput.className = "search-input no-print";
+            searchInput.placeholder = "Zadejte text...";
+            searchInput.addEventListener("input", handleSearchInput);
+
+            emptyContainer.appendChild(searchInput);
+            imageGrid.appendChild(emptyContainer);
+        }
+
+        const selectImageContainer = (container) => {
+            // Deselect previously selected container
+            const selectedContainer = document.querySelector(".selected");
+            if (selectedContainer) {
+                selectedContainer.classList.remove("selected");
+            }
+
+            // Select the clicked container
+            container.classList.add("selected");
+        };
+
+        const editKeyword = (container, currentKeyword = "") => {
+            const keywordInput = document.createElement("input");
+            keywordInput.type = "text";
+            keywordInput.value = currentKeyword;
+            keywordInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    container.querySelector(".keyword-text").textContent = keywordInput.value.toUpperCase();
+                    keywordInput.blur();
+                }
+            });
+
+            keywordInput.addEventListener("blur", () => {
+                container.removeChild(keywordInput);
+            });
+
+            container.appendChild(keywordInput);
+            keywordInput.focus();
+        };
+
+        const addCloseButton = () => {
+            const closeButton = document.createElement("div");
+            closeButton.id = "close-btn";
+            closeButton.innerHTML = "&times;";
+            closeButton.addEventListener("click", () => {
+                previewDialog.style.display = "none";
+                const selectedContainer = document.querySelector(".selected");
+                if (selectedContainer) {
+                    const searchInput = selectedContainer.querySelector(".search-input");
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }
+            });
+
+            previewDialog.appendChild(closeButton);
+        };
+
+        // Close the preview dialog if clicked outside of it
+        window.addEventListener("click", (event) => {
+            if (event.target === previewDialog) {
+                previewDialog.style.display = "none";
+                const selectedContainer = document.querySelector(".selected");
+                if (selectedContainer) {
+                    const searchInput = selectedContainer.querySelector(".search-input");
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

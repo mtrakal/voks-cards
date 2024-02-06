@@ -58,11 +58,11 @@
         .grey {
             background-color: grey;
         }
-        
+
         .purple {
             background-color: purple;
         }
-   
+
         .white {
             background-color: white;
         }
@@ -71,6 +71,7 @@
 
 <body>
     <h1>VOKS kartičky pro AAK</h1>
+    <h2><a href="./print.html">Stránka pro tisk kartiček</a></h2>
     <input type="text" id="searchInput" placeholder="Hledat&hellip;">
     <label><input type="checkbox" id="withColor" name="withColor">S barvou</label>
     <br>
@@ -100,7 +101,7 @@
                         .forEach(product => {
                             const card = document.createElement('div');
                             card.classList.add('card');
-                            if(withColor.checked) card.classList.add(product.color);
+                            if (product.color != null && withColor.checked) card.classList.add(product.color);
                             const tags = product.tags.join(', ');
                             card.innerHTML = `
                             <img src="./svg/${product.file}.svg" title="${product.file}" alt="${product.file}">
