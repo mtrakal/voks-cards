@@ -153,7 +153,7 @@
     </script> -->
 
     <h1 class="no-print">VOKS kartičky pro AAK - tisk</h1>
-    <h2 class="no-print"><a href="./index.html">Stránka pro tisk kartiček</a></h2>
+    <h2 class="no-print"><a href="./index.html">Stránka se seznamem všech kartiček</a></h2>
     <div id="image-grid"></div>
     <div id="preview-dialog"></div>
 
@@ -197,6 +197,7 @@
                 const img = document.createElement("img");
                 img.src = `${imageBaseUrl}${imageData.file}.svg`;
                 img.alt = imageData.tags.length > 0 ? imageData.tags[0] : "";
+                img.title = imageData.tags.length > 0 ? imageData.tags[0] : "";
                 img.addEventListener("click", () => showSelectedImage(imageData));
 
                 const previewItem = document.createElement("div");
