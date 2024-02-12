@@ -287,11 +287,14 @@
         const editKeyword = (container, currentKeyword = "") => {
             const keywordInput = document.createElement("input");
             keywordInput.type = "text";
+            keywordInput.enterKeyHint = "done";
             keywordInput.value = currentKeyword;
-            keywordInput.addEventListener("keydown", (event) => {
-                if (event.key === "Enter") {
+            keywordInput.addEventListener("keyup", (event) => {
+                // Number 13 is the "Enter" key on the keyboard
+                if (event.key === "Enter" || event.keyCode === 13) {
+                    // Cancel the default action, if needed
                     event.preventDefault();
-                    container.querySelector(".keyword-text").textContent = keywordInput.value.toUpperCase();
+                    container.querySelector(".keyword-text").textContent = keywordInput.value.trim.toUpperCase();
                     keywordInput.blur();
                 }
             });
