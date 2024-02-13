@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOKS kartičky</title>
+
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            zoom: 1;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .card {
+            width: 220px;
+            /* height: 300px; */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .card img {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 10px;
+        }
+
+        .orange {
+            background-color: orange;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .yellow {
+            background-color: yellow;
+        }
+
+        .blue {
+            background-color: blue;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .grey {
+            background-color: grey;
+        }
+
+        .purple {
+            background-color: purple;
+        }
+
+        .white {
+            background-color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>VOKS kartičky pro AAK</h1>
+    <h2><a href="index.html">Stránka pro tisk kartiček</a></h2>
+    <input type="text" id="searchInput" placeholder="Hledat&hellip;">
+    <label><input type="checkbox" id="withColor" name="withColor">S barvou</label>
+    <br>
+    <div class="container" id="cardsContainer">
+        <!-- Cards will be added dynamically here -->
+    </div>
+
+    <script>
+        // @ts-check
+        fetch('voks.json')
+            .then(response => response.json())
+            .then(data => {
+                const cardsContainer = document.getElementById('cardsContainer');
+                const searchInput = document.getElementById('searchInput');
+                const withColor = document.getElementById('withColor');
+
+                var filteredData = data
+                // 18: opravit
+                // 42: dlouhý, krátký a jiný
+                // 44: barvy
+
+
+                function renderCards() {
+                    cardsContainer.innerHTML = '';
+                    filteredData
+                        // .filter(product => (product.file).startsWith("01"))
+                        .forEach(product => {
+                            const card = document.createElement('div');
+                            card.classList.add('card');
+                            if (product.color != null && withColor.checked) card.classList.add(product.color);
+                            const tags = product.tags.join(', ');
+                            card.innerHTML = `
+                            <img src="./svg/${product.file}.svg" title="${product.file}" alt="${product.file}">
+                            <h2>${tags}</h2>
+                            <p>${product.category}</p>
+                        `;
+                            cardsContainer.appendChild(card);
+                        });
+                }
+
+                renderCards(data);
+
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.toLowerCase();
+                    const filteredProducts = data.filter(product => {
+                        const tags = product.tags.join(', ').toLowerCase();
+                        return tags.includes(searchTerm);
+                    });
+                    filteredData = filteredProducts;
+                    renderCards();
+                });
+
+                withColor.addEventListener('change', function () {
+                    renderCards();
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+
+</html>
